@@ -2,8 +2,8 @@
 #define __BASE_H__
 
 #include "platform_config.h"
-
 #include <stddef.h>
+#include "usb_conf.h"
 
 /*typedef signed char     int8_t;
 typedef unsigned char   uint8_t;
@@ -18,8 +18,8 @@ typedef unsigned long   uint32_t;*/
 
 #ifndef TRUE
 typedef unsigned char   BOOL;
-#define TRUE        1
-#define FALSE       0
+//#define TRUE        1
+//#define FALSE       0
 #endif
 
 #ifndef NULL
