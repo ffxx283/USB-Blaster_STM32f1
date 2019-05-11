@@ -24,15 +24,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "hw_config.h"
 #include <stdio.h>
 #include "base.h"
 #include "timebase.h"
 #include "led.h"
 #include "bitband.h"
-#include "hw_config.h"
 #include "usb_lib.h"
 #include "usb_pwr.h"
 #include "blaster.h"
+#include "blaster_port.h"
+
+u8 Now_Mode_AS = 0;
 
 /*-----------------------------------*/
 
@@ -64,6 +67,28 @@ BOOL key_is_pressed(void)
     return is_press;
 }
 
+//=------------------------------------------------------
+void AS_Mode_Init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+}
+
+void AS_Mode_Uninit(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+}
+
+
+
 /*-----------------------------------*/
 
 int main(void)
@@ -71,22 +96,29 @@ int main(void)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 
     // disable JTAG£¬use SWD only
-    GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+    //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
     timebase_init();
     led_init();
     blaster_init();
     
     // for debug use
-    if (!key_is_pressed()) {
+    //if (!key_is_pressed()) {
         USB_HW_Config();
         USB_Init();
-    }
+    //}
 
     led_flash(300, 100, 0);
 
     while (1) {
-        led_update();
+			
+			if(0 == NCE_IN() ){
+				Now_Mode_AS = 1;
+			}else
+				Now_Mode_AS = 0;
+			AS_Mode_Uninit();
+
+				led_update();
         if (bDeviceState == CONFIGURED)
         {
             blaster_exec();

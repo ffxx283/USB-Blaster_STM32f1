@@ -35,7 +35,7 @@ SOFTWARE.
 u32 ringbuf_init(ringbuf_t *ring_buf, void *buffer, u32 size)
 {
     if (!is_power_of_2(size)) {
-        return FALSE;
+        return 0;
     }
     
     memset(ring_buf, 0, sizeof(ringbuf_t));
@@ -44,7 +44,7 @@ u32 ringbuf_init(ringbuf_t *ring_buf, void *buffer, u32 size)
     ring_buf->in = 0;
     ring_buf->out = 0;
     
-    return TRUE;
+    return 1;
 }
 
 // 缓冲区数据的长度
