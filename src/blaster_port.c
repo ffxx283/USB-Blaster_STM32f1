@@ -28,50 +28,9 @@ SOFTWARE.
 #include "bitband.h"
 #include "blaster_port.h"
 
-/*-----------------------------------*/
-
-// uncomment to enable AS mode (no pins defined)
-#define BLASTER_AS_MODE_EN
-
-// uncomment to enable OE/LED
-#define BLASTER_OE_LED_EN
-
-// TCK: PA0
-#define TCK_OUT(d)      PAO(0) = (d)
-#define TCK_0()         TCK_OUT(0)
-#define TCK_1()         TCK_OUT(1)
-
-// TDO: PB4
-#define TDO_IN()        PAI(6)
-
-// TDI: PB5
-#define TDI_OUT(d)      PAO(4) = (d)
-
-// TMS: PB6
-#define TMS_OUT(d)      PAO(1) = (d)
-
-#ifdef BLASTER_OE_LED_EN
-// OE/LED: PA8
-#define OE_OUT(d)       PAO(5) = (d)
-#endif
-
-#ifdef BLASTER_AS_MODE_EN
-// NCE: PB0
-#define NCE_OUT(d)      PBO(0) = (d)
-
-// NCS: PB1
-#define NCS_OUT(d)      PBO(1) = (d)
-#define NCS_GETOUT()    PBI(1)
-
-// DATAOUT: PA7
-#define DATAOUT_IN()    PAI(7)
-#endif
-
+#define nCEPortNum GPIO_Pin_13
 
 extern u8 Now_Mode_AS;
-
-/*-----------------------------------*/
-
 void bport_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -95,16 +54,37 @@ void bport_init(void)
 
 #ifdef BLASTER_AS_MODE_EN
     // init AS mode pins here (nCS/nCE/DATAOUT)
+		// DATA0
 		GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_7;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
-		
-		GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_0 | GPIO_Pin_1;
+
+		//nCSO
+		GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_3;
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-		GPIO_Init(GPIOB, &GPIO_InitStructure);
+		GPIO_Init(GPIOA, &GPIO_InitStructure);
+				
+		//nCE
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);//¶Ë¿Ú¸´ÓÃ 
+		GPIO_InitStructure.GPIO_Pin =   nCEPortNum ;//|GPIO_Pin_14 | GPIO_Pin_15;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;		 
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+		GPIO_Init(GPIOC, &GPIO_InitStructure);
+		
+		PWR_BackupAccessCmd(ENABLE);//????RTC ??????		 
+		RCC_LSEConfig(RCC_LSE_OFF);//?????????????? ?,PC13 PC14 PC15 ??????IO??		 
+		//BKP_TamperPinCmd(DISABLE);//????????,??? PC13,??????IO ??		 
+		//BKP_ITConfig(DISABLE);
+		
+		
+//		GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_14;
+//		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+//    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+//		GPIO_Init(GPIOC, &GPIO_InitStructure);
 #endif
 }
+//=------------------------------------------------------
 
 
 // bit-band mode output
@@ -114,8 +94,10 @@ void bport_state_set(uint8_t d)
     TMS_OUT(0 != (d & BLASTER_STA_OUT_TMS));
     TCK_OUT(0 != (d & BLASTER_STA_OUT_TCK));
 #ifdef BLASTER_AS_MODE_EN
+	//if(Now_Mode_AS){
 		NCE_OUT(0 != (d & BLASTER_STA_OUT_NCE));
 		NCS_OUT(0 != (d & BLASTER_STA_OUT_NCS));
+	//}
 
 #endif
 		
@@ -131,6 +113,7 @@ uint8_t bport_state_get(void)
 
     d |= TDO_IN() << BLASTER_STA_IN_TDO_BIT;
 #ifdef BLASTER_AS_MODE_EN
+//if(Now_Mode_AS)
 			d |= DATAOUT_IN() << BLASTER_STA_IN_DATAOUT_BIT;
 #endif
 
@@ -162,8 +145,8 @@ uint8_t bport_shift_io(uint8_t d)
     uint32_t din;
     
 #ifdef BLASTER_AS_MODE_EN
-
-    if ( Now_Mode_AS && NCS_GETOUT()) {
+		// as mode
+    if (  !NCS_GETOUT()) {
         TDI_OUT(dshift); din = DATAOUT_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
         TDI_OUT(dshift); din = DATAOUT_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
         TDI_OUT(dshift); din = DATAOUT_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
@@ -175,18 +158,20 @@ uint8_t bport_shift_io(uint8_t d)
         return dshift & 0xff;
     }
 
+
 #endif //BLASTER_AS_MODE_EN
-
-   
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-    TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
-
+		// Jtag mode
+		if (  NCS_GETOUT())
+		{
+			  TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+				TDI_OUT(dshift); din = TDO_IN(); TCK_1(); dshift = (dshift >> 1) | (din << 7); TCK_0();
+		}
 
     return dshift & 0xff;
 }

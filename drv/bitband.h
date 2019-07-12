@@ -54,6 +54,6 @@
 #define PGO(n)              BIT_ADDR_IO(GPIOG_ODR_Addr, n)
 #define PGI(n)              BIT_ADDR_IO(GPIOG_IDR_Addr, n)
 
-#define NCE_IN()    		PBI(0)
+
 
 #endif //__BITBAND_H__

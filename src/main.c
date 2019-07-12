@@ -36,6 +36,7 @@ SOFTWARE.
 #include "blaster_port.h"
 
 u8 Now_Mode_AS = 0;
+extern  uint16_t s_led_period;
 
 /*-----------------------------------*/
 
@@ -67,25 +68,7 @@ BOOL key_is_pressed(void)
     return is_press;
 }
 
-//=------------------------------------------------------
-void AS_Mode_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
-}
-
-void AS_Mode_Uninit(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
-}
 
 
 
@@ -94,9 +77,10 @@ void AS_Mode_Uninit(void)
 int main(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-
+		//使用了内部振荡器，更新SystemCoreClock
+	  //SystemCoreClockUpdate();
     // disable JTAG，use SWD only
-    //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
     timebase_init();
     led_init();
@@ -108,16 +92,11 @@ int main(void)
         USB_Init();
     //}
 
-    led_flash(300, 100, 0);
+		
+				led_flash(300, 100, 0);		
 
-    while (1) {
-			
-			if(0 == NCE_IN() ){
-				Now_Mode_AS = 1;
-			}else
-				Now_Mode_AS = 0;
-			AS_Mode_Uninit();
-
+    while (1) { 				
+				
 				led_update();
         if (bDeviceState == CONFIGURED)
         {

@@ -28,31 +28,7 @@ SOFTWARE.
 #include "timebase.h"
 #include "led.h"
 
-// LED模式枚举
-typedef enum {
-    LED_MODE_NORMAL,    // 普通模式（亮/灭）
-    LED_MODE_FLASH,     // 闪烁模式
 
-    LED_MODE_MAX
-} led_mode_e;
-
-// LED模式
-static led_mode_e s_led_mode;
-
-// 上次更新时间(ms)
-static uint32_t s_led_last_time;
-
-// LED计时(ms)
-static uint16_t s_led_timer;
-
-// LED闪烁周期(ms)
-static uint16_t s_led_period;
-
-// LED每闪烁周期点亮时间(ms)
-static uint16_t s_led_pulse;
-
-// LED闪烁次数
-static uint16_t s_led_cycle_cnt;
 
 /*-----------------------------------*/
 
