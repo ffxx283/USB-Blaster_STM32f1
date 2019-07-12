@@ -78,7 +78,7 @@ int main(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 		//使用了内部振荡器，更新SystemCoreClock
-	  //SystemCoreClockUpdate();
+	  SystemCoreClockUpdate();
     // disable JTAG，use SWD only
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 

@@ -116,7 +116,7 @@
 /* #define SYSCLK_FREQ_HSE    HSE_VALUE */
 /* #define SYSCLK_FREQ_24MHz  24000000 */ 
 /* #define SYSCLK_FREQ_36MHz  36000000 */
-/* #define SYSCLK_FREQ_48MHz  48000000 */
+ #define SYSCLK_FREQ_48MHz  48000000 
 /* #define SYSCLK_FREQ_56MHz  56000000 */
 #define SYSCLK_FREQ_72MHz  72000000
 #endif
@@ -215,8 +215,34 @@ static void SetSysClock(void);
   * @param  None
   * @retval None
   */
+	
+
 void SystemInit (void)
 {
+	/* Open HSI :internal-clk*/
+	RCC->CR |= (uint32_t)0x00000001;
+	/*set HSI as PLL-source, HSI/2 => PLL */
+	RCC->CFGR |= (uint32_t)RCC_CFGR_PLLSRC_HSI_Div2;
+	/*PLLCLK=8/2*13=52MHz set PLL-Frequency*/
+	RCC->CFGR |= (uint32_t)RCC_CFGR_PLLMULL12;
+	/* set PLL-output-with-no-division*/
+	RCC->CFGR |= (uint32_t)RCC_CFGR_HPRE_DIV1;
+	/* enable PLL */
+	RCC->CR |= RCC_CR_PLLON;
+	/* wait PLL ready*/
+	while((RCC->CR & RCC_CR_PLLRDY) == 0)
+	{}
+	/* Set PLL as Clock*/
+	RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
+	RCC->CFGR |= (uint32_t)RCC_CFGR_SW_PLL;
+	/* Wait PLL as Clock*/
+	while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != (uint32_t)0x08)
+	{}
+	//以上是使用内部震荡器倍频48M，USB时钟需要配置USB_Clock_Config
+	// old code
+	return;
+	
+	
   /* Reset the RCC clock configuration to the default reset state(for debug purpose) */
   /* Set HSION bit */
   RCC->CR |= (uint32_t)0x00000001;
